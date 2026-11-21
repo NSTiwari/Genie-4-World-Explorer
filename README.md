@@ -27,7 +27,7 @@ A drive across the Golden Gate Bridge, started from a real photo of the bridge r
 
 Prompt: `Immersive first-person cockpit POV gripping the black leather steering wheel of a car stationary in the right lane of the main road on the Golden Gate Bridge, exactly as in the reference image.`
 
-![Golden Gate Bridge](docs/images/golden-gate-gameplay.jpg)
+![Golden Gate Bridge](docs/images/golden-gate.gif)
 
 Reference photo: [Driving North on the Golden Gate Bridge](https://commons.wikimedia.org/wiki/File:Driving_North_on_the_Golden_Gate_Bridge.jpg) by Hnapel, CC BY-SA 4.0.
 
