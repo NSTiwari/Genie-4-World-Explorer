@@ -1,0 +1,6 @@
+Flask>=3.0
+google-genai>=3.6.1
+Pillow>=10.0
+python-dotenv>=1.0
+requests>=2.31
+imageio-ffmpeg>=0.5

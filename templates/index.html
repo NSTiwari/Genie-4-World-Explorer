@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0l-5 5m5-5l5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <div class="credit" aria-label="Made with love by {{ credit_name }}">
+    <span>Made with</span>
+    <span class="heart" aria-hidden="true">🧡</span>
+    <span>by</span>
+    <img class="credit-logo" src="{{ url_for('static', filename='dev-logo.png') }}" alt="">
+    <span>{{ credit_name }}</span>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <h1>World Explorer</h1>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============ Left: world setup ============ -->
+    <section class="panel setup" aria-label="World setup">
+      <div class="block">
+        <label class="label" for="prompt">World prompt</label>
+        <textarea id="prompt" rows="4" maxlength="2000"
+          placeholder="First-person POV standing in a rain-soaked neon alley in Tokyo at night, puddles reflecting signs"></textarea>
+        <div class="chips" id="examples">
+          <button type="button" class="chip">First-person POV standing on a trail in a misty pine forest at dawn</button>
+          <button type="button" class="chip">Third-person explorer standing among ancient desert ruins at golden hour</button>
+          <button type="button" class="chip">First-person diver hovering still above a colorful coral reef</button>
+          <button type="button" class="chip">First-person POV standing in a snowy mountain village, wooden houses, evening lights</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="label-row">
+          <span class="label">Reference image <span class="muted">(optional)</span></span>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" class="tab active" data-tab="upload" aria-selected="true">Upload</button>
+            <button type="button" role="tab" class="tab" data-tab="maps" aria-selected="false">Google Maps</button>
+          </div>
+        </div>
+
+        <!-- Upload tab -->
+        <div class="tabpane" id="tab-upload">
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <svg class="dz-icon" aria-hidden="true"><use href="#i-upload"/></svg>
+            <span><strong>Drop an image</strong> or click to browse</span>
+            <span class="muted small">Cropped to 16:9, 1280 x 720</span>
+          </label>
+        </div>
+
+        <!-- Maps tab -->
+        <div class="tabpane hidden" id="tab-maps">
+          {% if maps_api_key %}
+            <div id="place-search" class="place-search"></div>
+            <form id="coords-form" class="coords">
+              <input id="coords-input" type="text" autocomplete="off"
+                placeholder="Paste a Google Maps link or lat, lng">
+              <button type="submit" class="btn small">Go</button>
+            </form>
+            <div class="maps-grid">
+              <div id="map" class="map" aria-label="Map: click anywhere to jump there"></div>
+              <div id="pano" class="pano" aria-label="Street View"></div>
+            </div>
+            <div class="maps-actions">
+              <span class="muted small" id="pano-info">Click the map or search a place, then look around.</span>
+              <button type="button" class="btn small" id="use-view">Use this view</button>
+            </div>
+          {% else %}
+            <p class="muted small empty-note">Google Maps is not available right now.</p>
+          {% endif %}
+        </div>
+
+        <figure class="ref hidden" id="ref">
+          <img id="ref-img" alt="Reference image preview">
+          <figcaption>
+            <span id="ref-caption" class="muted small"></span>
+            <button type="button" class="link" id="ref-clear">Remove</button>
+          </figcaption>
+        </figure>
+      </div>
+
+      <button type="button" class="btn primary big" id="start-btn">Generate world</button>
+      <p class="muted small">Sessions last up to {{ max_seconds }} seconds{% if recording_enabled %} and are saved to Recordings when they end{% endif %}.</p>
+    </section>
+
+    <!-- ============ Right: player + recordings ============ -->
+    <div class="right">
+      <section class="panel player" aria-label="Player">
+        <div class="stage" id="stage" tabindex="0">
+          <video id="screen" playsinline autoplay disablepictureinpicture></video>
+
+          <div class="overlay" id="overlay">
+            <div class="overlay-inner">
+              <div class="spinner hidden" id="spinner"></div>
+              <p id="overlay-text">Describe a world, add an image if you like, and press <strong>Generate world</strong>.</p>
+            </div>
+          </div>
+
+          <div class="hud">
+            <span class="pill" id="status-pill">Idle</span>
+            <span class="hud-right">
+              <span class="pill rec hidden" id="rec-pill"><span class="dot"></span>REC</span>
+              <span class="pill mono" id="timer">--:--</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="pad" aria-label="Move">
+            <span class="pad-title">Move</span>
+            <div class="keys">
+              <button type="button" class="key k-up" data-input="key_w">W</button>
+              <button type="button" class="key k-left" data-input="key_a">A</button>
+              <button type="button" class="key k-down" data-input="key_s">S</button>
+              <button type="button" class="key k-right" data-input="key_d">D</button>
+            </div>
+          </div>
+
+          <div class="middle">
+            <form id="event-form" class="event-form">
+              <input id="event-input" type="text" maxlength="500" autocomplete="off"
+                placeholder="Change the world, e.g. make it snow, a hot air balloon drifts by" disabled>
+              <button type="submit" class="btn small" id="event-btn" disabled>Send</button>
+            </form>
+            <div class="buttons">
+              <button type="button" class="btn danger small" id="end-btn" disabled>End</button>
+              <button type="button" class="btn small" id="mute-btn">Mute</button>
+              <button type="button" class="btn small" id="snap-btn" disabled>Snapshot</button>
+              <button type="button" class="btn small" id="fs-btn">Fullscreen</button>
+            </div>
+            <p class="muted small hint">Click the screen, then use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move and the arrow keys to look.</p>
+          </div>
+
+          <div class="pad" aria-label="Look">
+            <span class="pad-title">Look</span>
+            <div class="keys">
+              <button type="button" class="key k-up" data-input="arrow_up" aria-label="Look up"><svg><use href="#i-chev"/></svg></button>
+              <button type="button" class="key k-left" data-input="arrow_left" aria-label="Look left"><svg class="rot-270"><use href="#i-chev"/></svg></button>
+              <button type="button" class="key k-down" data-input="arrow_down" aria-label="Look down"><svg class="rot-180"><use href="#i-chev"/></svg></button>
+              <button type="button" class="key k-right" data-input="arrow_right" aria-label="Look right"><svg class="rot-90"><use href="#i-chev"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel recordings" aria-label="Recordings">
+        <div class="section-head">
+          <h2>Recordings</h2>
+          <span class="muted small" id="rec-count"></span>
+        </div>
+        <p class="muted small empty-note" id="rec-empty">Your sessions will appear here after they end.</p>
+        <div class="rec-grid" id="rec-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <template id="rec-card">
+    <article class="rec-card">
+      <video controls preload="metadata" playsinline></video>
+      <div class="rec-body">
+        <p class="rec-prompt"></p>
+        <div class="rec-meta">
+          <span class="muted small rec-when"></span>
+          <span class="rec-actions">
+            <a class="link rec-download" download>Download</a>
+            <button type="button" class="link danger rec-delete">Delete</button>
+          </span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    window.APP_CONFIG = {
+      maxSeconds: {{ max_seconds | tojson }},
+      recording: {{ recording_enabled | tojson }},
+      mapsKey: {{ maps_api_key | tojson }},
+      sdkUrl: {{ url_for('static', filename='vendor/genai-web-3.6.1.mjs') | tojson }}
+    };
+  </script>
+  <script type="module" src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
