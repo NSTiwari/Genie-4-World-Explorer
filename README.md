@@ -19,7 +19,7 @@ Describe any world, or pick a real place on Google Maps and walk through it.
 
 Prompt: `GTA VI bike riding in Vice City.`
 
-![Vice City](docs/images/vice-city-gameplay.jpg)
+![Vice City](docs/images/vice-city.gif)
 
 ### Real world: Golden Gate Bridge
 
@@ -63,7 +63,3 @@ Enable these on the Maps key: Maps JavaScript API, Places API (New), Street View
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
-
-## Credits
-
-Made with 🧡 by Nitin Tiwari.
